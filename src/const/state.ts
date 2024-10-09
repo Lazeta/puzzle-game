@@ -7,7 +7,7 @@ export const state = {
     blockMain: {
         x: 0, 
         y: 2,
-        width: 2,
+        width: 3,
         height: 1,
     }
 }
