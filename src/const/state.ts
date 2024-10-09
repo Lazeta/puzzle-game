@@ -3,7 +3,7 @@ export const state = {
         player: 0,
     },
     gridSize: 6,
-
+    // используем state.blockMain.x и y для задания позиции по оси x и y главному блоку. 
     blockMain: {
         x: 0, 
         y: 2,

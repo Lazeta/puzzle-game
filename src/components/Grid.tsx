@@ -5,6 +5,7 @@ import { state } from "../const/state";
 interface Block {
   id: number;
   position: { x: number, y: number };
+  size?: { width: number, height: number }; 
 }
 
 // функциональная компонента нашей сетки
@@ -38,11 +39,26 @@ export const Grid: React.FC = () => {
 
   // добавление блока (на поле). Создает новый блок с уникальным id и начальной позицией из state.blockMain. 
   // Обновляет массив блоков и устанавливает его начальную позицию в blockPosition.
-  // стоит изменить подачу базы данных и их обработку в функции.
   const addBlock = () => {
-    const newBlock: Block = { id: blocks.length + 1, position: { x: state.blockMain.x, y: state.blockMain.y } };
+    const newBlock: Block = { 
+      id: blocks.length + 1, 
+      position: { 
+        x: state.blockMain.x, // 0 - первая ячейка по оси x
+        y: state.blockMain.y, // 2 - третья ячейка по оси у (индекс 2 соответствует третьей ячейке)
+      }, 
+    };
     setBlocks([...blocks, newBlock]);
-    setBlockPosition({ ...setBlockPosition, [newBlock.id]: { x: 0, y: 0 } });
+    // старый метод когда мы задаем лишь первому блоку позицию зафиксированную, не из базы данных state.
+    // setBlockPosition({ ...setBlockPosition, [newBlock.id]: { x: 0, y: 2 } });
+    // При добавлении нового блока, его позиция устанавливается в 
+    // blockPosition на основе его координат из newBlock.position.
+    setBlockPosition({ 
+      ...blockPosition, 
+      [newBlock.id]: { 
+        x: newBlock.position.x, 
+        y: newBlock.position.y 
+      } 
+    })
   };
 
   // JSX разметка
