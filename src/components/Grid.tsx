@@ -17,7 +17,9 @@ export const Grid: React.FC = () => {
   // состояние, указывающее, происходит ли перетаскивание блока
   const [isDragging, setIsDragging] = useState(false);
   // состояние для хранения смещения курсора при перетаскивании блока
-  const [dragOffset, setDragOffset] = useState<{ x: number; y:number } | null>(null)
+  const [dragOffset, setDragOffset] = useState<{ x: number; y:number } | null>(null);
+  // состояние для хранения блока призрака 
+  const [ghostPosition, setGhostPosition] = useState<{ x:number; y:number } | null>(null);
 
 
   // обработчик клика по ячейке: обновляет позицию выбранного блока при клике на ячейку
@@ -30,6 +32,7 @@ export const Grid: React.FC = () => {
       );
       setBlocks(newBlocks); // обновляет состояние блоков
       setSelectedBlock(null); // сбрасывает выбранный блок
+      setGhostPosition(null); // Сбрасываем положение призрака
     }
   }
 
@@ -67,20 +70,24 @@ export const Grid: React.FC = () => {
     if (isDragging && selectedBlock !== null && dragOffset) {
       const newX = Math.floor((event.clientX - dragOffset.x) / 50); // вычисляет новую позицию по оси х
       const newY = Math.floor((event.clientY - dragOffset.y) / 50); // вычисляет новую позицию по оси у
-      setBlocks((prevBlocks) => 
-        prevBlocks.map((block) => 
-          block.id === selectedBlock
-            ? { ...block, position: { x: newX, y: newY } } // обновляет позицию блока
-            : block
-        )
-      );
+      setGhostPosition({ x: newX, y: newY }); // обновляем позицию призрака
     }
   };
 
   // обработчик окончания перетаскивания: сбрасывает состояние перетаскивания 
   const handleMouseUp = () => {
+    if (ghostPosition && selectedBlock !== null) {
+      setBlocks((prevBlocks) => 
+        prevBlocks.map((block) => 
+          block.id === selectedBlock
+            ? { ...block, position: ghostPosition } // перемещаем блок в новую позицию
+            : block
+        )
+      );
+    }
     setIsDragging(false); // сбрасывает состояние перетаскивания
     setDragOffset(null); // сбрасывает смещение курсора
+    setGhostPosition(null); // сбрасываем положение призрака
   };
 
   // добавляем обработчики событий на уровне окна для перемещения и отпускания мыши
@@ -172,6 +179,24 @@ export const Grid: React.FC = () => {
             </div>
           );
         })}
+        {/* Отображение призрака блока, если он перетаскивается */}
+        {isDragging && ghostPosition && (
+          <div
+            style={{
+              position: "absolute",
+              backgroundColor: "rgba(255, 255, 0, 0.5)", // полупрозрачный цвет для призрака
+              cursor: "pointer",
+              opacity: "0.8",
+              padding: "5px",
+              gridColumnStart: ghostPosition.x + 1,
+              gridRowStart: ghostPosition.y + 1,
+              gridColumnEnd: ghostPosition.x + 1 + state.blockMain.width,
+              gridRowEnd: ghostPosition.y + 1 + state.blockMain.height,
+            }}
+          >
+            Призрак {selectedBlock}
+          </div>
+        )}
       </div>
     </div>
   );
