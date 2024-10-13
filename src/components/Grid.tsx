@@ -14,93 +14,92 @@ export const Grid: React.FC = () => {
   const [blocks, setBlocks] = useState<Block[]>([]);
   // хранит id выбранного блока для перемещения. Изначально null.
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
-  // 
+  // состояние, указывающее, происходит ли перетаскивание блока
   const [isDragging, setIsDragging] = useState(false);
-  // 
+  // состояние для хранения смещения курсора при перетаскивании блока
   const [dragOffset, setDragOffset] = useState<{ x: number; y:number } | null>(null)
 
 
-  // обработчик клика по ячейке. При клике на ячейку, если выбран блок, обновляет его позицию на новую, заданную координатами х и у.
-  // После этого сбрасывает selectedBlock в null.
+  // обработчик клика по ячейке: обновляет позицию выбранного блока при клике на ячейку
   const handleCellClick = (x: number, y: number) => {
     if (selectedBlock !== null) {
       const newBlocks = blocks.map((block) => 
         block.id === selectedBlock
-          ? { ...block, position: { x, y } }
+          ? { ...block, position: { x, y } } // обновляет позицию блока
           : block
       );
-      setBlocks(newBlocks);
-      setSelectedBlock(null);
+      setBlocks(newBlocks); // обновляет состояние блоков
+      setSelectedBlock(null); // сбрасывает выбранный блок
     }
   }
 
-  // обработчик клика по блоку. При клике на блок устанавливает его id как selectedBlock. 
-  // Использует event.stopPropagation(), чтобы предотвратить срабатывание события клика на ячейке.
-  const handleBlockClick = (id: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedBlock(id);
-  };
-
-  // добавление блока (на поле). Создает новый блок с уникальным id и начальной позицией из state.blockMain. 
-  // Обновляет массив блоков и устанавливает его начальную позицию в blockPosition.
+  // функция для добавления нового блока на поле: создает новый блок и обновляет массив блоков
   const addBlock = () => {
     const newBlock: Block = { 
-      id: blocks.length + 1, 
+      id: blocks.length + 1, // уникальный идентификатор
       position: { 
         x: state.blockMain.x, // 0 - первая ячейка по оси x
         y: state.blockMain.y, // 2 - третья ячейка по оси у (индекс 2 соответствует третьей ячейке)
       }, 
       // при создании нового блока мы задаём так же размеры из базы данных
       size: {
-        width: state.blockMain.width, // 2
-        height: state.blockMain.height, // 1
+        width: state.blockMain.width, // ширина блока (количество ячеек)
+        height: state.blockMain.height, // высота блока (количество ячеек)
       }
     };
-    setBlocks([...blocks, newBlock]);
+    setBlocks([...blocks, newBlock]); // обновляет состояние блоков
   };
 
-  // 
+  // обработчик начала перетаскивания: устанавливает состояние перетаскивания и фиксирует смещение курсора
   const handleMouseDown = (id: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedBlock(id);
-    setIsDragging(true);
-    const target = event.currentTarget.getBoundingClientRect();
+    event.stopPropagation(); 
+    setSelectedBlock(id); // устанавливает выбранный блок
+    setIsDragging(true); // устанавливает состояние перетаскивания
+    const target = event.currentTarget.getBoundingClientRect(); // получает размеры блока
     setDragOffset({
-      x: event.clientX - target.left,
-      y: event.clientY - target.top,
+      x: event.clientX - target.left, // вычисляет смещение по оси х
+      y: event.clientY - target.top,  // вычисляет смещение по оси у
     });
   };
 
-  // 
+  // обработчик перемещения мыши: обновляет позицию блока в зависимости от положения курсора
   const handleMouseMove = (event: MouseEvent) => {
     if (isDragging && selectedBlock !== null && dragOffset) {
-      const newX = Math.floor((event.clientX - dragOffset.x) / 50);
-      const newY = Math.floor((event.clientY - dragOffset.y) / 50);
+      const newX = Math.floor((event.clientX - dragOffset.x) / 50); // вычисляет новую позицию по оси х
+      const newY = Math.floor((event.clientY - dragOffset.y) / 50); // вычисляет новую позицию по оси у
       setBlocks((prevBlocks) => 
         prevBlocks.map((block) => 
           block.id === selectedBlock
-            ? { ...block, position: { x: newX, y: newY } }
+            ? { ...block, position: { x: newX, y: newY } } // обновляет позицию блока
             : block
         )
       );
     }
   };
 
-  // 
+  // обработчик окончания перетаскивания: сбрасывает состояние перетаскивания 
   const handleMouseUp = () => {
-    setIsDragging(false);
-    setDragOffset(null);
+    setIsDragging(false); // сбрасывает состояние перетаскивания
+    setDragOffset(null); // сбрасывает смещение курсора
   };
 
-  // добавляем обработчики событий на уровне окна
+  // добавляем обработчики событий на уровне окна для перемещения и отпускания мыши
   React.useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove); // отслеживает перемещение мыши
+    window.addEventListener("mouseup", handleMouseUp); // отслеживает отпускание кнопки мыши
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove); // удаляет обработчик при размонтировании
+      window.removeEventListener("mouseup", handleMouseUp); // удаляет обработчик при размонтировании
     };
   }, [isDragging, selectedBlock, dragOffset]);
+
+  // обработчик клика по блоку: устанавливает его ID как выбранный и предотвращает событие клика на ячейке
+  // используем эту функцию если хотим взаимодействовать с блоком по клику
+  const handleBlockClick = (id: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // предотвращает срабатывание события клика на ячейке
+    setSelectedBlock(id); // устанавливает выбранный блок
+  };
+
 
   // JSX разметка
   return (
@@ -151,7 +150,8 @@ export const Grid: React.FC = () => {
                     // тут нашему блоку задаються стили и вешаем обработчик клика по блоку
                     <div
                       key={block.id}
-                      onClick={(event) => handleBlockClick(block.id, event)}
+                      onMouseDown={(event) => handleMouseDown(block.id, event)} // обработчик начала перетаскивания
+                      // onClick={(event) => handleBlockClick(block.id, event)}
                       style={{
                         backgroundColor: "yellow",
                         cursor: "pointer",
@@ -160,7 +160,7 @@ export const Grid: React.FC = () => {
                         gridColumnStart: block.position.x + 1,
                         gridRowStart: block.position.y + 1,
                         gridColumnEnd: block.position.x + block.size.width + 1,
-                        gridRowEnd: block.position.y + block.size.height - 2,
+                        gridRowEnd: block.position.y + block.size.height + 1,
                       }}
                     >
                       {block.id}
