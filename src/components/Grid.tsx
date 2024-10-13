@@ -14,6 +14,12 @@ export const Grid: React.FC = () => {
   const [blocks, setBlocks] = useState<Block[]>([]);
   // хранит id выбранного блока для перемещения. Изначально null.
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
+  // 
+  const [isDragging, setIsDragging] = useState(false);
+  // 
+  const [dragOffset, setDragOffset] = useState<{ x: number; y:number } | null>(null)
+
+
   // обработчик клика по ячейке. При клике на ячейку, если выбран блок, обновляет его позицию на новую, заданную координатами х и у.
   // После этого сбрасывает selectedBlock в null.
   const handleCellClick = (x: number, y: number) => {
@@ -50,9 +56,51 @@ export const Grid: React.FC = () => {
         height: state.blockMain.height, // 1
       }
     };
-    console.log('Adding block:', newBlock);
     setBlocks([...blocks, newBlock]);
   };
+
+  // 
+  const handleMouseDown = (id: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedBlock(id);
+    setIsDragging(true);
+    const target = event.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: event.clientX - target.left,
+      y: event.clientY - target.top,
+    });
+  };
+
+  // 
+  const handleMouseMove = (event: MouseEvent) => {
+    if (isDragging && selectedBlock !== null && dragOffset) {
+      const newX = Math.floor((event.clientX - dragOffset.x) / 50);
+      const newY = Math.floor((event.clientY - dragOffset.y) / 50);
+      setBlocks((prevBlocks) => 
+        prevBlocks.map((block) => 
+          block.id === selectedBlock
+            ? { ...block, position: { x: newX, y: newY } }
+            : block
+        )
+      );
+    }
+  };
+
+  // 
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragOffset(null);
+  };
+
+  // добавляем обработчики событий на уровне окна
+  React.useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, selectedBlock, dragOffset]);
 
   // JSX разметка
   return (
@@ -112,7 +160,7 @@ export const Grid: React.FC = () => {
                         gridColumnStart: block.position.x + 1,
                         gridRowStart: block.position.y + 1,
                         gridColumnEnd: block.position.x + block.size.width + 1,
-                        gridRowEnd: block.position.y + block.size.height + 1,
+                        gridRowEnd: block.position.y + block.size.height - 2,
                       }}
                     >
                       {block.id}
